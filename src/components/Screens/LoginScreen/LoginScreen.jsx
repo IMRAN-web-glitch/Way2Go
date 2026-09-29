@@ -9,6 +9,7 @@ export const LoginScreen = () => {
   const [password, setPassword] = useState('password123');
   const [selectedProfile, setSelectedProfile] = useState(userProfile.profileType || 'Wheelchair');
   const [errorMessage, setErrorMessage] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -75,15 +76,24 @@ export const LoginScreen = () => {
               <span className="login-input-icon">
                 <LockIcon size={18} color="#475569" />
               </span>
+
               <input
                 id="login-password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 className="login-input-field"
-                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? "🙈" : "👁️"}
+              </button>
             </div>
           </div>
 
