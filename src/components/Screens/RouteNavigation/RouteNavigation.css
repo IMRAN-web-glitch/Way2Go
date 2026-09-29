@@ -1,0 +1,378 @@
+/* Dedicated RouteNavigation CSS */
+.route-screen-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #f8fafc;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Top Dark Status Bar */
+.route-header-bar {
+  background-color: #1d273a;
+  padding: 22px 20px 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #ffffff;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(29, 39, 58, 0.2);
+}
+
+.route-metric-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.route-metric-label {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.route-metric-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+.route-help-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.route-help-btn:hover {
+  background-color: rgba(255, 255, 255, 0.25);
+}
+
+/* Scroll Body */
+.route-scroll-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Turn Instruction Card */
+.route-turn-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.turn-icon-box {
+  width: 54px;
+  height: 54px;
+  border-radius: var(--radius-md);
+  background-color: #fbebed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.turn-icon-box.success {
+  background-color: #eaf7ee;
+}
+
+.turn-text-info {
+  flex: 1;
+}
+
+.turn-instruction-title {
+  font-size: 1.25rem;
+  color: #1d273a;
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+
+.turn-step-count {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Floor Map Section */
+.floor-map-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.floor-map-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.floor-map-title {
+  font-size: 1.15rem;
+  color: #1d273a;
+}
+
+.floor-badge-tag {
+  background-color: #1d273a;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 100px;
+  letter-spacing: 0.04em;
+}
+
+.blueprint-map-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-lg);
+  padding: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.blueprint-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.animated-route-line {
+  stroke-dashoffset: 100;
+  animation: dashMove 2.5s linear infinite;
+}
+
+@keyframes dashMove {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Simulator controls */
+.route-sim-controls {
+  padding: 2px 0;
+}
+
+.sim-buttons-group {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.sim-btn {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.sim-btn.secondary {
+  background-color: #e2e8f0;
+  color: #1e293b;
+}
+
+.sim-btn.secondary:hover:not(:disabled) {
+  background-color: #cbd5e1;
+}
+
+.sim-btn.secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.sim-btn.primary {
+  background-color: #0284c7;
+  color: #ffffff;
+}
+
+.sim-btn.primary:hover {
+  background-color: #0369a1;
+}
+
+.sim-btn.active {
+  background-color: #f59e0b;
+  color: #ffffff;
+}
+
+/* Voice Assist Card */
+.voice-assist-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+}
+
+.voice-assist-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.voice-assist-icon {
+  display: flex;
+  align-items: center;
+}
+
+.voice-assist-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1d273a;
+}
+
+/* Custom Toggle Switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #cbd5e1;
+  transition: 0.3s;
+  border-radius: 34px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+input:checked + .toggle-slider {
+  background-color: var(--color-accent-maroon);
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(22px);
+}
+
+/* Stop Navigation Button */
+.stop-nav-button {
+  margin-top: 6px;
+  width: 100%;
+  padding: 16px;
+  background-color: var(--color-accent-maroon);
+  color: #ffffff;
+  border-radius: var(--radius-md);
+  font-size: 1.05rem;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(123, 40, 55, 0.3);
+  transition: all 0.2s ease;
+}
+
+.stop-nav-button:hover {
+  background-color: var(--color-accent-maroon-hover);
+  box-shadow: 0 6px 18px rgba(123, 40, 55, 0.4);
+}
+
+/* High Contrast Mode */
+body.theme-high-contrast .route-screen-container {
+  background-color: #000000;
+}
+
+body.theme-high-contrast .route-header-bar {
+  background-color: #000000;
+  border-bottom: 2px solid #ffffff;
+}
+
+body.theme-high-contrast .route-turn-card,
+body.theme-high-contrast .blueprint-map-card,
+body.theme-high-contrast .voice-assist-card {
+  background-color: #121212;
+  border-color: #ffffff;
+}
+
+body.theme-high-contrast .turn-instruction-title,
+body.theme-high-contrast .floor-map-title,
+body.theme-high-contrast .voice-assist-label {
+  color: #ffffff;
+}
+
+body.theme-high-contrast .stop-nav-button {
+  background-color: #ff4d6d;
+}
+
+@media (min-width: 768px) {
+  .route-header-bar {
+    padding: 24px 40px 20px;
+  }
+
+  .route-scroll-body {
+    width: 100%;
+    max-width: 840px;
+    margin: 0 auto;
+    padding: 24px 32px 36px;
+    gap: 20px;
+  }
+
+  .blueprint-map-card {
+    padding: 18px;
+  }
+}
+
+@media (max-width: 374px) {
+  .route-header-bar {
+    padding: 16px 14px;
+  }
+
+  .route-metric-value {
+    font-size: 0.95rem;
+  }
+
+  .route-scroll-body {
+    padding: 14px 14px 20px;
+  }
+
+  .sim-buttons-group {
+    flex-wrap: wrap;
+  }
+
+  .sim-btn {
+    min-width: calc(50% - 4px);
+  }
+
+  .sim-btn.primary,
+  .sim-btn.active {
+    order: -1;
+    flex-basis: 100%;
+  }
+}

@@ -1,0 +1,37 @@
+/* Layout shell: the application follows the browser's actual viewport. */
+.responsive-outer-container {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+}
+
+.app-device-wrapper,
+.app-device-wrapper.mode-mobile,
+.app-device-wrapper.mode-tablet,
+.app-device-wrapper.mode-full {
+  width: 100%;
+  max-width: none;
+  height: 100vh;
+  height: 100dvh;
+  max-height: none;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  border-radius: 0;
+  box-shadow: none;
+  background-color: #f8fafc;
+}
+
+.app-screen-viewport {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.app-screen-viewport > * {
+  width: 100%;
+}

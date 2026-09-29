@@ -1,0 +1,328 @@
+/* Dedicated CameraScan CSS */
+.camera-screen-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--color-primary-navy);
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Header */
+.camera-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background-color: var(--color-primary-navy);
+  z-index: 10;
+}
+
+.camera-back-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background-color: #141c2b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.camera-back-btn:hover {
+  background-color: #0f172a;
+}
+
+.camera-title {
+  font-size: 1.25rem;
+  color: #ffffff;
+  margin: 0;
+  text-align: center;
+  flex: 1;
+}
+
+.camera-header-spacer {
+  width: 40px;
+}
+
+/* Subheader Banner */
+.camera-instruction-banner {
+  background-color: #0c1017;
+  padding: 14px 20px;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #e2e8f0;
+  z-index: 10;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Viewfinder Area */
+.camera-viewfinder-area {
+  flex: 1;
+  position: relative;
+  background-color: #cbd5e1;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.camera-live-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Simulated Floor Tiles */
+.camera-simulated-floor {
+  position: absolute;
+  inset: 0;
+  background-color: #e5e9f0;
+  perspective: 600px;
+  overflow: hidden;
+}
+
+.simulated-tile-grid {
+  position: absolute;
+  inset: -50px;
+  background-image: 
+    linear-gradient(to right, rgba(148, 163, 184, 0.4) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.4) 1px, transparent 1px);
+  background-size: 90px 90px;
+  transform: rotateX(25deg);
+  transform-origin: center bottom;
+}
+
+.simulated-light-glare {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 45%;
+  height: 100%;
+  background: linear-gradient(105deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 70%);
+  pointer-events: none;
+}
+
+/* Reticle Box */
+.camera-reticle-box {
+  position: relative;
+  width: 250px;
+  height: 250px;
+  border: 3.5px solid var(--color-accent-maroon);
+  border-radius: var(--radius-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.4);
+  z-index: 5;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.camera-scan-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #ff4d6d, transparent);
+  box-shadow: 0 0 12px #ff4d6d;
+  animation: scanSweep 2s ease-in-out infinite;
+}
+
+@keyframes scanSweep {
+  0% { top: 10px; opacity: 0.2; }
+  50% { opacity: 1; }
+  100% { top: 235px; opacity: 0.2; }
+}
+
+/* Center AprilTag Target */
+.camera-apriltag-marker {
+  width: 76px;
+  height: 76px;
+  background-color: #64748b;
+  border: 4px solid #1e293b;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.camera-apriltag-marker.locked {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.6);
+}
+
+.apriltag-pattern {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  width: 44px;
+  height: 44px;
+  background-color: #ffffff;
+  padding: 4px;
+  gap: 4px;
+}
+
+.tag-pixel {
+  background-color: #000000;
+}
+.tag-pixel.p1 { background-color: #000; }
+.tag-pixel.p2 { background-color: #fff; }
+.tag-pixel.p3 { background-color: #fff; }
+.tag-pixel.p4 { background-color: #000; }
+
+.tag-lock-badge {
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background-color: #16a34a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 10;
+}
+
+@keyframes popIn {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+/* Bottom Sheet */
+.camera-bottom-sheet {
+  background-color: var(--color-primary-navy);
+  border-top-left-radius: 28px;
+  border-top-right-radius: 28px;
+  padding: 24px 20px 12px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  z-index: 10;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.camera-tag-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.status-indicator-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.status-indicator-dot.active {
+  background-color: #22c55e;
+  box-shadow: 0 0 10px #22c55e;
+}
+
+.status-indicator-dot.scanning {
+  background-color: #f59e0b;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0.4; }
+}
+
+.status-tag-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.camera-proceed-btn {
+  width: 100%;
+  padding: 14px;
+  background-color: var(--color-accent-maroon);
+  color: #ffffff;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(123, 40, 55, 0.4);
+  transition: all 0.2s ease;
+  animation: fadeIn 0.3s ease;
+}
+
+.camera-proceed-btn:hover {
+  background-color: var(--color-accent-maroon-hover);
+}
+
+.camera-manual-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.camera-manual-link {
+  color: #ffffff;
+  text-decoration: underline;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.camera-fallback-subtext {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.camera-indicator {
+  background-color: #ffffff;
+  opacity: 0.5;
+}
+
+@media (min-width: 768px) {
+  .camera-header {
+    padding: 20px 40px;
+  }
+
+  .camera-instruction-banner {
+    padding: 16px 32px;
+  }
+
+  .camera-bottom-sheet {
+    padding: 28px 32px 16px;
+  }
+
+  .camera-proceed-btn {
+    width: 100%;
+    max-width: 720px;
+  }
+
+  .camera-proceed-btn,
+  .camera-tag-status,
+  .camera-manual-fallback {
+    align-self: center;
+  }
+}
+
+@media (max-width: 374px) {
+  .camera-header {
+    padding: 12px 14px;
+  }
+
+  .camera-title {
+    font-size: 1.05rem;
+  }
+
+  .camera-reticle-box {
+    width: 210px;
+    height: 210px;
+  }
+
+  .camera-bottom-sheet {
+    padding: 18px 16px 10px;
+    gap: 12px;
+  }
+}

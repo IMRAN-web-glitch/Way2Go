@@ -1,0 +1,16 @@
+/* Dedicated ManualLocationModal CSS */
+.manual-loc-card {
+  max-width: 440px;
+}
+
+.modal-icon-badge.manual {
+  background-color: var(--color-accent-maroon-light);
+}
+
+.manual-desc {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+  margin-bottom: 16px;
+}
+

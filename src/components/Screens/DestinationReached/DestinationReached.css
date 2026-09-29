@@ -1,0 +1,252 @@
+/* Dedicated DestinationReached CSS */
+.reached-screen-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #f8fafc;
+  position: relative;
+  overflow: hidden;
+}
+
+.reached-content-card {
+  flex: 1;
+  overflow-y: auto;
+  padding: 48px 24px 20px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+/* Big Green Checkmark Badge */
+.reached-badge-circle {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background-color: #e2f4e8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(22, 163, 74, 0.15);
+  animation: pulseCheck 2s infinite ease-in-out;
+}
+
+@keyframes pulseCheck {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* Titles */
+.reached-titles-group {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.reached-main-title {
+  font-size: 2rem;
+  color: #1d273a;
+  letter-spacing: -0.01em;
+}
+
+.reached-destination-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-accent-maroon);
+}
+
+.reached-stats-line {
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+/* Rating Card */
+.reached-rating-card {
+  width: 100%;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-lg);
+  padding: 24px 20px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.reached-card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1d273a;
+}
+
+.stars-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.star-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  transition: transform 0.15s ease;
+}
+
+.star-btn:hover {
+  transform: scale(1.2);
+}
+
+.rating-feedback-toast {
+  font-size: 0.82rem;
+  color: #15803d;
+  font-weight: 600;
+  background-color: #dcfce7;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  animation: fadeIn 0.2s ease;
+}
+
+/* Report Obstacle Card */
+.reached-obstacle-card {
+  width: 100%;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  text-align: left;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+}
+
+.reached-obstacle-card:hover {
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+}
+
+.obstacle-icon-box {
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-md);
+  background-color: #faecef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.obstacle-text-info {
+  flex: 1;
+}
+
+.obstacle-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1d273a;
+  margin-bottom: 2px;
+}
+
+.obstacle-sub {
+  font-size: 0.8rem;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.obstacle-arrow {
+  display: flex;
+  align-items: center;
+}
+
+/* Bottom Actions */
+.reached-bottom-action-area {
+  padding: 16px 20px 12px 20px;
+  background-color: #f8fafc;
+  width: 100%;
+}
+
+.reached-home-button {
+  width: 100%;
+  padding: 16px;
+  background-color: #1d273a;
+  color: #ffffff;
+  border-radius: var(--radius-md);
+  font-size: 1.05rem;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(29, 39, 58, 0.3);
+  transition: all 0.2s ease;
+}
+
+.reached-home-button:hover {
+  background-color: #141c2b;
+  box-shadow: 0 6px 18px rgba(29, 39, 58, 0.4);
+}
+
+/* High Contrast Mode */
+body.theme-high-contrast .reached-screen-container,
+body.theme-high-contrast .reached-bottom-action-area {
+  background-color: #000000;
+}
+
+body.theme-high-contrast .reached-main-title,
+body.theme-high-contrast .reached-card-title,
+body.theme-high-contrast .obstacle-title {
+  color: #ffffff;
+}
+
+body.theme-high-contrast .reached-rating-card,
+body.theme-high-contrast .reached-obstacle-card {
+  background-color: #121212;
+  border-color: #ffffff;
+}
+
+body.theme-high-contrast .reached-home-button {
+  background-color: #ffffff;
+  color: #000000;
+  font-weight: 700;
+}
+
+@media (min-width: 768px) {
+  .reached-content-card {
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 56px 32px 28px;
+  }
+
+  .reached-bottom-action-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 32px 14px;
+  }
+
+  .reached-home-button {
+    max-width: 700px;
+  }
+}
+
+@media (max-width: 374px) {
+  .reached-content-card {
+    padding: 32px 16px 16px;
+    gap: 18px;
+  }
+
+  .reached-badge-circle {
+    width: 76px;
+    height: 76px;
+  }
+
+  .reached-main-title {
+    font-size: 1.7rem;
+  }
+
+  .stars-row {
+    gap: 6px;
+  }
+}

@@ -1,0 +1,95 @@
+/* Dedicated BottomNav CSS */
+.bottom-nav-container {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  background-color: var(--color-card-bg);
+  border-top: 1px solid var(--color-card-border);
+  z-index: 50;
+  padding-top: 8px;
+  padding-bottom: 4px;
+  backdrop-filter: blur(10px);
+}
+
+.bottom-nav-bar {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--color-text-muted);
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 64px;
+}
+
+.bottom-nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.bottom-nav-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.bottom-nav-item:hover {
+  color: var(--color-accent-maroon);
+}
+
+.bottom-nav-item.active {
+  color: var(--color-accent-maroon);
+}
+
+.bottom-nav-item.active .bottom-nav-icon {
+  transform: translateY(-2px);
+}
+
+.bottom-nav-item.active .bottom-nav-label {
+  font-weight: 700;
+}
+
+/* High contrast support */
+body.theme-high-contrast .bottom-nav-container {
+  background-color: #000000;
+  border-top: 2px solid #ffffff;
+}
+
+body.theme-high-contrast .bottom-nav-item {
+  color: #a0aec0;
+}
+
+body.theme-high-contrast .bottom-nav-item.active {
+  color: #ff4d6d;
+}
+
+@media (min-width: 768px) {
+  .bottom-nav-container {
+    padding-top: 10px;
+    padding-bottom: 6px;
+  }
+
+  .bottom-nav-bar {
+    max-width: 760px;
+    padding: 0 24px;
+  }
+
+  .bottom-nav-item {
+    min-width: 88px;
+    padding: 8px 18px;
+  }
+}
