@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lab 1 + Lab 2 Indoor Path Map</title>
+<style>
+*{box-sizing:border-box}
+:root{--blue:#1a73e8;--ink:#202124;--muted:#6b7280;--line:#dfe3e8;--bg:#eef2f5}
+body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg);overflow:hidden}
+header{height:72px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 20px;gap:12px;position:relative;z-index:10;box-shadow:0 2px 10px #00000010}
+.logo{width:40px;height:40px;border-radius:12px;background:var(--blue);color:#fff;display:grid;place-items:center;font-size:21px;font-weight:800}
+.title{font-size:18px;font-weight:780;letter-spacing:-.2px}.sub{font-size:12px;color:var(--muted);margin-top:2px}
+.badge{margin-left:auto;padding:8px 12px;border:1px solid #d8dee5;border-radius:20px;background:#f8fafc;color:#59636e;font-size:12px}
+#viewport{position:absolute;top:72px;left:0;right:0;bottom:0;overflow:hidden;cursor:grab;background:#e8edf1;
+background-image:linear-gradient(#ffffff80 1px,transparent 1px),linear-gradient(90deg,#ffffff80 1px,transparent 1px);background-size:32px 32px}
+#viewport.dragging{cursor:grabbing}
+#map{position:absolute;transform-origin:0 0;filter:drop-shadow(0 8px 22px #00000012)}
+.panel{position:absolute;z-index:5;background:#fffffff2;border:1px solid #dfe4e8;border-radius:13px;box-shadow:0 3px 15px #00000014}
+.controls{right:18px;top:18px;overflow:hidden}
+.controls button{width:46px;height:44px;border:0;background:#fff;font-size:21px;cursor:pointer}.controls button+button{border-top:1px solid #eee}
+.legend{left:18px;bottom:18px;padding:13px 15px;font-size:12px;min-width:205px}
+.legend b{display:block;margin-bottom:8px}.key{display:flex;align-items:center;gap:8px;margin:6px 0}.sw{width:20px;height:12px;border-radius:8px;border:1px solid #cfd6dd}.sw.path{background:#1a73e8;border-color:#1a73e8}.sw.bridge{background:#0f9d58;border-color:#0f9d58}.sw.node{width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid #1a73e8}.sw.blocked{background:#c4ccd4;border-color:#b7c0ca}
+.info{right:18px;bottom:18px;min-width:245px;padding:13px 15px;font-size:12px;line-height:1.55}.info strong{font-size:14px}
+.hint{left:50%;top:16px;transform:translateX(-50%);padding:7px 13px;border-radius:20px;font-size:12px;color:#667085;pointer-events:none;white-space:nowrap}
+.routebar{left:50%;bottom:18px;transform:translateX(-50%);padding:9px 14px;font-size:12px;color:#59636e;display:none}
+svg{display:block}
+.grid-bg{fill:#f8fafc;stroke:#cbd3db;stroke-width:2}
+.cell{fill:#dfe5ea;stroke:#d2d9e0;stroke-width:1}
+.cell.hasnode{fill:#fff}
+.grid-label{font-size:10px;fill:#8a939d}
+.axis{font-size:11px;fill:#5f6368;font-weight:700}
+.lab-title{font-size:22px;font-weight:800;fill:#202124}
+.lab-meta{font-size:11px;fill:#707983}
+.path-outline{stroke:#fff;stroke-width:10;stroke-linecap:round;stroke-linejoin:round;opacity:.92}
+.path{stroke:#1a73e8;stroke-width:6;stroke-linecap:round;stroke-linejoin:round}
+.path.selected{stroke:#fbbc04;stroke-width:8}
+.bridge-outline{stroke:#fff;stroke-width:13;stroke-linecap:round;stroke-linejoin:round;opacity:.95}.bridge{stroke:#0f9d58;stroke-width:8;stroke-linecap:round;stroke-linejoin:round}.bridge.selected{stroke:#fbbc04;stroke-width:10}.bridge-label{font-weight:750;fill:#0f9d58}
+.node-dot{fill:#fff;stroke:#1a73e8;stroke-width:3}
+.node-dot.selected{fill:#1a73e8;stroke:#fff;stroke-width:3}
+.node-label{font-size:9px;fill:#65707b;pointer-events:none}
+.node-label.selected{fill:#1a73e8;font-weight:800}
+.lab-card{fill:#fff;stroke:#d5dce3;stroke-width:2}
+.divider{stroke:#cfd6dd;stroke-width:2;stroke-dasharray:8 8}
+.scale{font-size:11px;fill:#5f6368}
+.north{font-size:14px;font-weight:800;fill:#4b5563}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">⌖</div>
+  <div>
+    <div class="title">Connected Lab Indoor Map</div>
+    <div class="sub">Lab 1 + Lab 2 · node coordinates from nodes JSON · walkable paths from edges JSON · 1 edge = 0.6 m</div>
+  </div>
+  <div class="badge">Reference-aligned · Lab 1 above Lab 2</div>
+</header>
+
+<div id="viewport">
+  <div class="panel hint">Drag to pan · scroll to zoom · click two nodes to show the shortest walkable path (including the bridge)</div>
+  <div class="panel controls">
+    <button onclick="zoomAt(1.2)">+</button>
+    <button onclick="zoomAt(.8333333333)">−</button>
+    <button onclick="resetView()">⌂</button>
+  </div>
+  <div class="panel legend">
+    <b>MAP KEY</b>
+    <div class="key"><span class="sw path"></span>Walkable path (edge)</div>
+    <div class="key"><span class="sw bridge"></span>Walkable cross-lab bridge</div>
+    <div class="key"><span class="sw node"></span>Coordinate node</div>
+    <div class="key"><span class="sw blocked"></span>No node / not in graph</div>
+  </div>
+  <div class="panel info" id="info"><strong>Map ready</strong><br>Select two coordinate nodes to calculate a route.</div>
+  <div class="panel routebar" id="routebar"></div>
+  <div id="map"></div>
+</div>
+
+<script>
+const DATA={"lab1":{"nodes":[{"nodeId":"lab1_node_0_0","label":"LAB1 Aisle 0,0","x":0,"y":0},{"nodeId":"lab1_node_1_0","label":"LAB1 Aisle 1,0","x":1,"y":0},{"nodeId":"lab1_node_2_0","label":"LAB1 Aisle 2,0","x":2,"y":0},{"nodeId":"lab1_node_3_0","label":"LAB1 Aisle 3,0","x":3,"y":0},{"nodeId":"lab1_node_4_0","label":"LAB1 Aisle 4,0","x":4,"y":0},{"nodeId":"lab1_node_5_0","label":"LAB1 Aisle 5,0","x":5,"y":0},{"nodeId":"lab1_node_6_0","label":"LAB1 Aisle 6,0","x":6,"y":0},{"nodeId":"lab1_node_10_0","label":"LAB1 Aisle 10,0","x":10,"y":0},{"nodeId":"lab1_node_1_1","label":"LAB1 Aisle 1,1","x":1,"y":1},{"nodeId":"lab1_node_2_1","label":"LAB1 Aisle 2,1","x":2,"y":1},{"nodeId":"lab1_node_3_1","label":"LAB1 Aisle 3,1","x":3,"y":1},{"nodeId":"lab1_node_4_1","label":"LAB1 Aisle 4,1","x":4,"y":1},{"nodeId":"lab1_node_5_1","label":"LAB1 Aisle 5,1","x":5,"y":1},{"nodeId":"lab1_node_6_1","label":"LAB1 Aisle 6,1","x":6,"y":1},{"nodeId":"lab1_node_10_1","label":"LAB1 Aisle 10,1","x":10,"y":1},{"nodeId":"lab1_node_1_2","label":"LAB1 Aisle 1,2","x":1,"y":2},{"nodeId":"lab1_node_2_2","label":"LAB1 Aisle 2,2","x":2,"y":2},{"nodeId":"lab1_node_3_2","label":"LAB1 Aisle 3,2","x":3,"y":2},{"nodeId":"lab1_node_6_2","label":"LAB1 Aisle 6,2","x":6,"y":2},{"nodeId":"lab1_node_10_2","label":"LAB1 Aisle 10,2","x":10,"y":2},{"nodeId":"lab1_node_11_2","label":"LAB1 Aisle 11,2","x":11,"y":2},{"nodeId":"lab1_node_1_3","label":"LAB1 Aisle 1,3","x":1,"y":3},{"nodeId":"lab1_node_2_3","label":"LAB1 Aisle 2,3","x":2,"y":3},{"nodeId":"lab1_node_3_3","label":"LAB1 Aisle 3,3","x":3,"y":3},{"nodeId":"lab1_node_6_3","label":"LAB1 Aisle 6,3","x":6,"y":3},{"nodeId":"lab1_node_7_3","label":"LAB1 Aisle 7,3","x":7,"y":3},{"nodeId":"lab1_node_11_3","label":"LAB1 Aisle 11,3","x":11,"y":3},{"nodeId":"lab1_node_10_3","label":"LAB1 Aisle 10,3","x":10,"y":3},{"nodeId":"lab1_node_1_4","label":"LAB1 Aisle 1,4","x":1,"y":4},{"nodeId":"lab1_node_2_4","label":"LAB1 Aisle 2,4","x":2,"y":4},{"nodeId":"lab1_node_3_4","label":"LAB1 Aisle 3,4","x":3,"y":4},{"nodeId":"lab1_node_6_4","label":"LAB1 Aisle 6,4","x":6,"y":4},{"nodeId":"lab1_node_7_4","label":"LAB1 Aisle 7,4","x":7,"y":4},{"nodeId":"lab1_node_10_4","label":"LAB1 Aisle 10,4","x":10,"y":4},{"nodeId":"lab1_node_0_5","label":"LAB1 Aisle 0,5","x":0,"y":5},{"nodeId":"lab1_node_1_5","label":"LAB1 Aisle 1,5","x":1,"y":5},{"nodeId":"lab1_node_2_5","label":"LAB1 Aisle 2,5","x":2,"y":5},{"nodeId":"lab1_node_3_5","label":"LAB1 Aisle 3,5","x":3,"y":5},{"nodeId":"lab1_node_6_5","label":"LAB1 Aisle 6,5","x":6,"y":5},{"nodeId":"lab1_node_7_5","label":"LAB1 Aisle 7,5","x":7,"y":5},{"nodeId":"lab1_node_10_5","label":"LAB1 Aisle 10,5","x":10,"y":5},{"nodeId":"lab1_node_0_6","label":"LAB1 Aisle 0,6","x":0,"y":6},{"nodeId":"lab1_node_1_6","label":"LAB1 Aisle 1,6","x":1,"y":6},{"nodeId":"lab1_node_2_6","label":"LAB1 Aisle 2,6","x":2,"y":6},{"nodeId":"lab1_node_3_6","label":"LAB1 Aisle 3,6","x":3,"y":6},{"nodeId":"lab1_node_6_6","label":"LAB1 Aisle 6,6","x":6,"y":6},{"nodeId":"lab1_node_6_7","label":"LAB1 Aisle 6,7","x":6,"y":7},{"nodeId":"lab1_node_10_6","label":"LAB1 Aisle 10,6","x":10,"y":6},{"nodeId":"lab1_node_1_7","label":"LAB1 Aisle 1,7","x":1,"y":7},{"nodeId":"lab1_node_2_7","label":"LAB1 Aisle 2,7","x":2,"y":7},{"nodeId":"lab1_node_3_7","label":"LAB1 Aisle 3,7","x":3,"y":7},{"nodeId":"lab1_node_7_7","label":"LAB1 Aisle 7,7","x":7,"y":7},{"nodeId":"lab1_node_10_7","label":"LAB1 Aisle 10,7","x":10,"y":7},{"nodeId":"lab1_node_1_8","label":"LAB1 Aisle 1,8","x":1,"y":8},{"nodeId":"lab1_node_2_8","label":"LAB1 Aisle 2,8","x":2,"y":8},{"nodeId":"lab1_node_3_8","label":"LAB1 Aisle 3,8","x":3,"y":8},{"nodeId":"lab1_node_4_8","label":"LAB1 Aisle 4,8","x":4,"y":8},{"nodeId":"lab1_node_5_8","label":"LAB1 Aisle 5,8","x":5,"y":8},{"nodeId":"lab1_node_6_8","label":"LAB1 Aisle 6,8","x":6,"y":8},{"nodeId":"lab1_node_7_8","label":"LAB1 Aisle 7,8","x":7,"y":8},{"nodeId":"lab1_node_10_8","label":"LAB1 Aisle 10,8","x":10,"y":8},{"nodeId":"lab1_node_3_9","label":"LAB1 Aisle 3,9","x":3,"y":9},{"nodeId":"lab1_node_4_9","label":"LAB1 Aisle 4,9","x":4,"y":9},{"nodeId":"lab1_node_5_9","label":"LAB1 Aisle 5,9","x":5,"y":9},{"nodeId":"lab1_node_6_9","label":"LAB1 Aisle 6,9","x":6,"y":9},{"nodeId":"lab1_node_8_9","label":"LAB1 Aisle 8,9","x":8,"y":9},{"nodeId":"lab1_node_9_9","label":"LAB1 Aisle 9,9","x":9,"y":9},{"nodeId":"lab1_node_10_9","label":"LAB1 Aisle 10,9","x":10,"y":9},{"nodeId":"lab1_node_3_10","label":"LAB1 Aisle 3,10","x":3,"y":10},{"nodeId":"lab1_node_4_10","label":"LAB1 Aisle 4,10","x":4,"y":10},{"nodeId":"lab1_node_5_10","label":"LAB1 Aisle 5,10","x":5,"y":10},{"nodeId":"lab1_node_6_10","label":"LAB1 Aisle 6,10","x":6,"y":10},{"nodeId":"lab1_node_7_10","label":"LAB1 Aisle 7,10","x":7,"y":10},{"nodeId":"lab1_node_8_10","label":"LAB1 Aisle 8,10","x":8,"y":10},{"nodeId":"lab1_node_9_10","label":"LAB1 Aisle 9,10","x":9,"y":10},{"nodeId":"lab1_node_10_10","label":"LAB1 Aisle 10,10","x":10,"y":10},{"nodeId":"lab1_node_11_10","label":"LAB1 Aisle 11,10","x":11,"y":10},{"nodeId":"lab1_node_3_11","label":"LAB1 Aisle 3,11","x":3,"y":11},{"nodeId":"lab1_node_10_11","label":"LAB1 Aisle 10,11","x":10,"y":11},{"nodeId":"lab1_node_11_11","label":"LAB1 Aisle 11,11","x":11,"y":11},{"nodeId":"lab1_node_7_6","label":"LAB1 Aisle 7,6","x":7,"y":6},{"nodeId":"lab1_node_7_9","label":"LAB1 Aisle 7,9","x":7,"y":9}],"edges":[{"sourceNode":"lab1_node_0_0","targetNode":"lab1_node_1_0","distance":0.6},{"sourceNode":"lab1_node_1_0","targetNode":"lab1_node_2_0","distance":0.6},{"sourceNode":"lab1_node_1_0","targetNode":"lab1_node_1_1","distance":0.6},{"sourceNode":"lab1_node_2_0","targetNode":"lab1_node_3_0","distance":0.6},{"sourceNode":"lab1_node_2_0","targetNode":"lab1_node_2_1","distance":0.6},{"sourceNode":"lab1_node_3_0","targetNode":"lab1_node_4_0","distance":0.6},{"sourceNode":"lab1_node_3_0","targetNode":"lab1_node_3_1","distance":0.6},{"sourceNode":"lab1_node_4_0","targetNode":"lab1_node_5_0","distance":0.6},{"sourceNode":"lab1_node_4_0","targetNode":"lab1_node_4_1","distance":0.6},{"sourceNode":"lab1_node_5_0","targetNode":"lab1_node_6_0","distance":0.6},{"sourceNode":"lab1_node_5_0","targetNode":"lab1_node_5_1","distance":0.6},{"sourceNode":"lab1_node_6_0","targetNode":"lab1_node_6_1","distance":0.6},{"sourceNode":"lab1_node_10_0","targetNode":"lab1_node_10_1","distance":0.6},{"sourceNode":"lab1_node_1_1","targetNode":"lab1_node_2_1","distance":0.6},{"sourceNode":"lab1_node_1_1","targetNode":"lab1_node_1_2","distance":0.6},{"sourceNode":"lab1_node_2_1","targetNode":"lab1_node_3_1","distance":0.6},{"sourceNode":"lab1_node_2_1","targetNode":"lab1_node_2_2","distance":0.6},{"sourceNode":"lab1_node_3_1","targetNode":"lab1_node_4_1","distance":0.6},{"sourceNode":"lab1_node_3_1","targetNode":"lab1_node_3_2","distance":0.6},{"sourceNode":"lab1_node_4_1","targetNode":"lab1_node_5_1","distance":0.6},{"sourceNode":"lab1_node_5_1","targetNode":"lab1_node_6_1","distance":0.6},{"sourceNode":"lab1_node_6_1","targetNode":"lab1_node_6_2","distance":0.6},{"sourceNode":"lab1_node_10_1","targetNode":"lab1_node_10_2","distance":0.6},{"sourceNode":"lab1_node_1_2","targetNode":"lab1_node_2_2","distance":0.6},{"sourceNode":"lab1_node_1_2","targetNode":"lab1_node_1_3","distance":0.6},{"sourceNode":"lab1_node_2_2","targetNode":"lab1_node_3_2","distance":0.6},{"sourceNode":"lab1_node_2_2","targetNode":"lab1_node_2_3","distance":0.6},{"sourceNode":"lab1_node_3_2","targetNode":"lab1_node_3_3","distance":0.6},{"sourceNode":"lab1_node_6_2","targetNode":"lab1_node_6_3","distance":0.6},{"sourceNode":"lab1_node_10_2","targetNode":"lab1_node_11_2","distance":0.6},{"sourceNode":"lab1_node_10_2","targetNode":"lab1_node_10_3","distance":0.6},{"sourceNode":"lab1_node_11_2","targetNode":"lab1_node_11_3","distance":0.6},{"sourceNode":"lab1_node_1_3","targetNode":"lab1_node_2_3","distance":0.6},{"sourceNode":"lab1_node_1_3","targetNode":"lab1_node_1_4","distance":0.6},{"sourceNode":"lab1_node_2_3","targetNode":"lab1_node_3_3","distance":0.6},{"sourceNode":"lab1_node_2_3","targetNode":"lab1_node_2_4","distance":0.6},{"sourceNode":"lab1_node_3_3","targetNode":"lab1_node_3_4","distance":0.6},{"sourceNode":"lab1_node_6_3","targetNode":"lab1_node_7_3","distance":0.6},{"sourceNode":"lab1_node_6_3","targetNode":"lab1_node_6_4","distance":0.6},{"sourceNode":"lab1_node_7_3","targetNode":"lab1_node_7_4","distance":0.6},{"sourceNode":"lab1_node_10_3","targetNode":"lab1_node_11_3","distance":0.6},{"sourceNode":"lab1_node_10_3","targetNode":"lab1_node_10_4","distance":0.6},{"sourceNode":"lab1_node_1_4","targetNode":"lab1_node_2_4","distance":0.6},{"sourceNode":"lab1_node_1_4","targetNode":"lab1_node_1_5","distance":0.6},{"sourceNode":"lab1_node_2_4","targetNode":"lab1_node_3_4","distance":0.6},{"sourceNode":"lab1_node_2_4","targetNode":"lab1_node_2_5","distance":0.6},{"sourceNode":"lab1_node_3_4","targetNode":"lab1_node_3_5","distance":0.6},{"sourceNode":"lab1_node_6_4","targetNode":"lab1_node_7_4","distance":0.6},{"sourceNode":"lab1_node_6_4","targetNode":"lab1_node_6_5","distance":0.6},{"sourceNode":"lab1_node_7_4","targetNode":"lab1_node_7_5","distance":0.6},{"sourceNode":"lab1_node_10_4","targetNode":"lab1_node_10_5","distance":0.6},{"sourceNode":"lab1_node_0_5","targetNode":"lab1_node_1_5","distance":0.6},{"sourceNode":"lab1_node_0_5","targetNode":"lab1_node_0_6","distance":0.6},{"sourceNode":"lab1_node_1_5","targetNode":"lab1_node_2_5","distance":0.6},{"sourceNode":"lab1_node_1_5","targetNode":"lab1_node_1_6","distance":0.6},{"sourceNode":"lab1_node_2_5","targetNode":"lab1_node_3_5","distance":0.6},{"sourceNode":"lab1_node_2_5","targetNode":"lab1_node_2_6","distance":0.6},{"sourceNode":"lab1_node_3_5","targetNode":"lab1_node_3_6","distance":0.6},{"sourceNode":"lab1_node_6_5","targetNode":"lab1_node_7_5","distance":0.6},{"sourceNode":"lab1_node_6_5","targetNode":"lab1_node_6_6","distance":0.6},{"sourceNode":"lab1_node_10_5","targetNode":"lab1_node_10_6","distance":0.6},{"sourceNode":"lab1_node_0_6","targetNode":"lab1_node_1_6","distance":0.6},{"sourceNode":"lab1_node_1_6","targetNode":"lab1_node_2_6","distance":0.6},{"sourceNode":"lab1_node_1_6","targetNode":"lab1_node_1_7","distance":0.6},{"sourceNode":"lab1_node_2_6","targetNode":"lab1_node_3_6","distance":0.6},{"sourceNode":"lab1_node_2_6","targetNode":"lab1_node_2_7","distance":0.6},{"sourceNode":"lab1_node_3_6","targetNode":"lab1_node_3_7","distance":0.6},{"sourceNode":"lab1_node_6_6","targetNode":"lab1_node_6_7","distance":0.6},{"sourceNode":"lab1_node_6_7","targetNode":"lab1_node_7_7","distance":0.6},{"sourceNode":"lab1_node_6_7","targetNode":"lab1_node_6_8","distance":0.6},{"sourceNode":"lab1_node_10_6","targetNode":"lab1_node_10_7","distance":0.6},{"sourceNode":"lab1_node_1_7","targetNode":"lab1_node_2_7","distance":0.6},{"sourceNode":"lab1_node_1_7","targetNode":"lab1_node_1_8","distance":0.6},{"sourceNode":"lab1_node_2_7","targetNode":"lab1_node_3_7","distance":0.6},{"sourceNode":"lab1_node_2_7","targetNode":"lab1_node_2_8","distance":0.6},{"sourceNode":"lab1_node_3_7","targetNode":"lab1_node_3_8","distance":0.6},{"sourceNode":"lab1_node_7_7","targetNode":"lab1_node_7_8","distance":0.6},{"sourceNode":"lab1_node_10_7","targetNode":"lab1_node_10_8","distance":0.6},{"sourceNode":"lab1_node_1_8","targetNode":"lab1_node_2_8","distance":0.6},{"sourceNode":"lab1_node_2_8","targetNode":"lab1_node_3_8","distance":0.6},{"sourceNode":"lab1_node_3_8","targetNode":"lab1_node_4_8","distance":0.6},{"sourceNode":"lab1_node_3_8","targetNode":"lab1_node_3_9","distance":0.6},{"sourceNode":"lab1_node_4_8","targetNode":"lab1_node_5_8","distance":0.6},{"sourceNode":"lab1_node_4_8","targetNode":"lab1_node_4_9","distance":0.6},{"sourceNode":"lab1_node_5_8","targetNode":"lab1_node_6_8","distance":0.6},{"sourceNode":"lab1_node_5_8","targetNode":"lab1_node_5_9","distance":0.6},{"sourceNode":"lab1_node_6_8","targetNode":"lab1_node_7_8","distance":0.6},{"sourceNode":"lab1_node_6_8","targetNode":"lab1_node_6_9","distance":0.6},{"sourceNode":"lab1_node_10_8","targetNode":"lab1_node_10_9","distance":0.6},{"sourceNode":"lab1_node_3_9","targetNode":"lab1_node_4_9","distance":0.6},{"sourceNode":"lab1_node_3_9","targetNode":"lab1_node_3_10","distance":0.6},{"sourceNode":"lab1_node_4_9","targetNode":"lab1_node_5_9","distance":0.6},{"sourceNode":"lab1_node_4_9","targetNode":"lab1_node_4_10","distance":0.6},{"sourceNode":"lab1_node_5_9","targetNode":"lab1_node_6_9","distance":0.6},{"sourceNode":"lab1_node_5_9","targetNode":"lab1_node_5_10","distance":0.6},{"sourceNode":"lab1_node_6_9","targetNode":"lab1_node_6_10","distance":0.6},{"sourceNode":"lab1_node_8_9","targetNode":"lab1_node_9_9","distance":0.6},{"sourceNode":"lab1_node_8_9","targetNode":"lab1_node_8_10","distance":0.6},{"sourceNode":"lab1_node_9_9","targetNode":"lab1_node_10_9","distance":0.6},{"sourceNode":"lab1_node_9_9","targetNode":"lab1_node_9_10","distance":0.6},{"sourceNode":"lab1_node_10_9","targetNode":"lab1_node_10_10","distance":0.6},{"sourceNode":"lab1_node_3_10","targetNode":"lab1_node_4_10","distance":0.6},{"sourceNode":"lab1_node_3_10","targetNode":"lab1_node_3_11","distance":0.6},{"sourceNode":"lab1_node_4_10","targetNode":"lab1_node_5_10","distance":0.6},{"sourceNode":"lab1_node_5_10","targetNode":"lab1_node_6_10","distance":0.6},{"sourceNode":"lab1_node_6_10","targetNode":"lab1_node_7_10","distance":0.6},{"sourceNode":"lab1_node_7_10","targetNode":"lab1_node_8_10","distance":0.6},{"sourceNode":"lab1_node_8_10","targetNode":"lab1_node_9_10","distance":0.6},{"sourceNode":"lab1_node_9_10","targetNode":"lab1_node_10_10","distance":0.6},{"sourceNode":"lab1_node_10_10","targetNode":"lab1_node_11_10","distance":0.6},{"sourceNode":"lab1_node_10_10","targetNode":"lab1_node_10_11","distance":0.6},{"sourceNode":"lab1_node_11_10","targetNode":"lab1_node_11_11","distance":0.6},{"sourceNode":"lab1_node_10_11","targetNode":"lab1_node_11_11","distance":0.6}]},"lab2":{"nodes":[{"nodeId":"lab2_node_0_0","label":"LAB2 Aisle 0,0","x":0,"y":0},{"nodeId":"lab2_node_1_0","label":"LAB2 Aisle 1,0","x":1,"y":0},{"nodeId":"lab2_node_2_0","label":"LAB2 Aisle 2,0","x":2,"y":0},{"nodeId":"lab2_node_3_0","label":"LAB2 Aisle 3,0","x":3,"y":0},{"nodeId":"lab2_node_4_0","label":"LAB2 Aisle 4,0","x":4,"y":0},{"nodeId":"lab2_node_5_0","label":"LAB2 Aisle 5,0","x":5,"y":0},{"nodeId":"lab2_node_8_0","label":"LAB2 Aisle 8,0","x":8,"y":0},{"nodeId":"lab2_node_9_0","label":"LAB2 Aisle 9,0","x":9,"y":0},{"nodeId":"lab2_node_10_0","label":"LAB2 Aisle 10,0","x":10,"y":0},{"nodeId":"lab2_node_11_0","label":"LAB2 Aisle 11,0","x":11,"y":0},{"nodeId":"lab2_node_0_1","label":"LAB2 Aisle 0,1","x":0,"y":1},{"nodeId":"lab2_node_1_1","label":"LAB2 Aisle 1,1","x":1,"y":1},{"nodeId":"lab2_node_2_1","label":"LAB2 Aisle 2,1","x":2,"y":1},{"nodeId":"lab2_node_3_1","label":"LAB2 Aisle 3,1","x":3,"y":1},{"nodeId":"lab2_node_4_1","label":"LAB2 Aisle 4,1","x":4,"y":1},{"nodeId":"lab2_node_5_1","label":"LAB2 Aisle 5,1","x":5,"y":1},{"nodeId":"lab2_node_8_1","label":"LAB2 Aisle 8,1","x":8,"y":1},{"nodeId":"lab2_node_9_1","label":"LAB2 Aisle 9,1","x":9,"y":1},{"nodeId":"lab2_node_10_1","label":"LAB2 Aisle 10,1","x":10,"y":1},{"nodeId":"lab2_node_11_1","label":"LAB2 Aisle 11,1","x":11,"y":1},{"nodeId":"lab2_node_0_2","label":"LAB2 Aisle 0,2","x":0,"y":2},{"nodeId":"lab2_node_1_2","label":"LAB2 Aisle 1,2","x":1,"y":2},{"nodeId":"lab2_node_2_2","label":"LAB2 Aisle 2,2","x":2,"y":2},{"nodeId":"lab2_node_3_2","label":"LAB2 Aisle 3,2","x":3,"y":2},{"nodeId":"lab2_node_4_2","label":"LAB2 Aisle 4,2","x":4,"y":2},{"nodeId":"lab2_node_5_2","label":"LAB2 Aisle 5,2","x":5,"y":2},{"nodeId":"lab2_node_6_2","label":"LAB2 Aisle 6,2","x":6,"y":2},{"nodeId":"lab2_node_7_2","label":"LAB2 Aisle 7,2","x":7,"y":2},{"nodeId":"lab2_node_8_2","label":"LAB2 Aisle 8,2","x":8,"y":2},{"nodeId":"lab2_node_9_2","label":"LAB2 Aisle 9,2","x":9,"y":2},{"nodeId":"lab2_node_10_2","label":"LAB2 Aisle 10,2","x":10,"y":2},{"nodeId":"lab2_node_11_2","label":"LAB2 Aisle 11,2","x":11,"y":2},{"nodeId":"lab2_node_0_3","label":"LAB2 Aisle 0,3","x":0,"y":3},{"nodeId":"lab2_node_1_3","label":"LAB2 Aisle 1,3","x":1,"y":3},{"nodeId":"lab2_node_2_3","label":"LAB2 Aisle 2,3","x":2,"y":3},{"nodeId":"lab2_node_3_3","label":"LAB2 Aisle 3,3","x":3,"y":3},{"nodeId":"lab2_node_5_3","label":"LAB2 Aisle 5,3","x":5,"y":3},{"nodeId":"lab2_node_8_3","label":"LAB2 Aisle 8,3","x":8,"y":3},{"nodeId":"lab2_node_9_3","label":"LAB2 Aisle 9,3","x":9,"y":3},{"nodeId":"lab2_node_10_3","label":"LAB2 Aisle 10,3","x":10,"y":3},{"nodeId":"lab2_node_1_4","label":"LAB2 Aisle 1,4","x":1,"y":4},{"nodeId":"lab2_node_2_4","label":"LAB2 Aisle 2,4","x":2,"y":4},{"nodeId":"lab2_node_3_4","label":"LAB2 Aisle 3,4","x":3,"y":4},{"nodeId":"lab2_node_5_4","label":"LAB2 Aisle 5,4","x":5,"y":4},{"nodeId":"lab2_node_8_4","label":"LAB2 Aisle 8,4","x":8,"y":4},{"nodeId":"lab2_node_9_4","label":"LAB2 Aisle 9,4","x":9,"y":4},{"nodeId":"lab2_node_10_4","label":"LAB2 Aisle 10,4","x":10,"y":4},{"nodeId":"lab2_node_1_5","label":"LAB2 Aisle 1,5","x":1,"y":5},{"nodeId":"lab2_node_2_5","label":"LAB2 Aisle 2,5","x":2,"y":5},{"nodeId":"lab2_node_3_5","label":"LAB2 Aisle 3,5","x":3,"y":5},{"nodeId":"lab2_node_5_5","label":"LAB2 Aisle 5,5","x":5,"y":5},{"nodeId":"lab2_node_8_5","label":"LAB2 Aisle 8,5","x":8,"y":5},{"nodeId":"lab2_node_9_5","label":"LAB2 Aisle 9,5","x":9,"y":5},{"nodeId":"lab2_node_10_5","label":"LAB2 Aisle 10,5","x":10,"y":5},{"nodeId":"lab2_node_1_6","label":"LAB2 Aisle 1,6","x":1,"y":6},{"nodeId":"lab2_node_2_6","label":"LAB2 Aisle 2,6","x":2,"y":6},{"nodeId":"lab2_node_3_6","label":"LAB2 Aisle 3,6","x":3,"y":6},{"nodeId":"lab2_node_5_6","label":"LAB2 Aisle 5,6","x":5,"y":6},{"nodeId":"lab2_node_8_6","label":"LAB2 Aisle 8,6","x":8,"y":6},{"nodeId":"lab2_node_9_6","label":"LAB2 Aisle 9,6","x":9,"y":6},{"nodeId":"lab2_node_10_6","label":"LAB2 Aisle 10,6","x":10,"y":6},{"nodeId":"lab2_node_1_7","label":"LAB2 Aisle 1,7","x":1,"y":7},{"nodeId":"lab2_node_2_7","label":"LAB2 Aisle 2,7","x":2,"y":7},{"nodeId":"lab2_node_3_7","label":"LAB2 Aisle 3,7","x":3,"y":7},{"nodeId":"lab2_node_5_7","label":"LAB2 Aisle 5,7","x":5,"y":7},{"nodeId":"lab2_node_8_7","label":"LAB2 Aisle 8,7","x":8,"y":7},{"nodeId":"lab2_node_9_7","label":"LAB2 Aisle 9,7","x":9,"y":7},{"nodeId":"lab2_node_10_7","label":"LAB2 Aisle 10,7","x":10,"y":7},{"nodeId":"lab2_node_1_8","label":"LAB2 Aisle 1,8","x":1,"y":8},{"nodeId":"lab2_node_2_8","label":"LAB2 Aisle 2,8","x":2,"y":8},{"nodeId":"lab2_node_3_8","label":"LAB2 Aisle 3,8","x":3,"y":8},{"nodeId":"lab2_node_5_8","label":"LAB2 Aisle 5,8","x":5,"y":8},{"nodeId":"lab2_node_8_8","label":"LAB2 Aisle 8,8","x":8,"y":8},{"nodeId":"lab2_node_9_8","label":"LAB2 Aisle 9,8","x":9,"y":8},{"nodeId":"lab2_node_10_8","label":"LAB2 Aisle 10,8","x":10,"y":8},{"nodeId":"lab2_node_1_9","label":"LAB2 Aisle 1,9","x":1,"y":9},{"nodeId":"lab2_node_2_9","label":"LAB2 Aisle 2,9","x":2,"y":9},{"nodeId":"lab2_node_3_9","label":"LAB2 Aisle 3,9","x":3,"y":9},{"nodeId":"lab2_node_5_9","label":"LAB2 Aisle 5,9","x":5,"y":9},{"nodeId":"lab2_node_8_9","label":"LAB2 Aisle 8,9","x":8,"y":9},{"nodeId":"lab2_node_9_9","label":"LAB2 Aisle 9,9","x":9,"y":9},{"nodeId":"lab2_node_10_9","label":"LAB2 Aisle 10,9","x":10,"y":9},{"nodeId":"lab2_node_3_10","label":"LAB2 Aisle 3,10","x":3,"y":10},{"nodeId":"lab2_node_4_10","label":"LAB2 Aisle 4,10","x":4,"y":10},{"nodeId":"lab2_node_5_10","label":"LAB2 Aisle 5,10","x":5,"y":10},{"nodeId":"lab2_node_6_10","label":"LAB2 Aisle 6,10","x":6,"y":10},{"nodeId":"lab2_node_7_10","label":"LAB2 Aisle 7,10","x":7,"y":10},{"nodeId":"lab2_node_8_10","label":"LAB2 Aisle 8,10","x":8,"y":10},{"nodeId":"lab2_node_9_10","label":"LAB2 Aisle 9,10","x":9,"y":10},{"nodeId":"lab2_node_10_10","label":"LAB2 Aisle 10,10","x":10,"y":10},{"nodeId":"lab2_node_3_11","label":"LAB2 Aisle 3,11","x":3,"y":11},{"nodeId":"lab2_node_4_11","label":"LAB2 Aisle 4,11","x":4,"y":11},{"nodeId":"lab2_node_5_11","label":"LAB2 Aisle 5,11","x":5,"y":11},{"nodeId":"lab2_node_6_11","label":"LAB2 Aisle 6,11","x":6,"y":11},{"nodeId":"lab2_node_7_11","label":"LAB2 Aisle 7,11","x":7,"y":11},{"nodeId":"lab2_node_8_11","label":"LAB2 Aisle 8,11","x":8,"y":11},{"nodeId":"lab2_node_9_11","label":"LAB2 Aisle 9,11","x":9,"y":11},{"nodeId":"lab2_node_10_11","label":"LAB2 Aisle 10,11","x":10,"y":11}],"edges":[{"sourceNode":"lab2_node_0_0","targetNode":"lab2_node_1_0","distance":0.6},{"sourceNode":"lab2_node_0_0","targetNode":"lab2_node_0_1","distance":0.6},{"sourceNode":"lab2_node_1_0","targetNode":"lab2_node_2_0","distance":0.6},{"sourceNode":"lab2_node_1_0","targetNode":"lab2_node_1_1","distance":0.6},{"sourceNode":"lab2_node_2_0","targetNode":"lab2_node_3_0","distance":0.6},{"sourceNode":"lab2_node_2_0","targetNode":"lab2_node_2_1","distance":0.6},{"sourceNode":"lab2_node_3_0","targetNode":"lab2_node_4_0","distance":0.6},{"sourceNode":"lab2_node_3_0","targetNode":"lab2_node_3_1","distance":0.6},{"sourceNode":"lab2_node_4_0","targetNode":"lab2_node_5_0","distance":0.6},{"sourceNode":"lab2_node_4_0","targetNode":"lab2_node_4_1","distance":0.6},{"sourceNode":"lab2_node_5_0","targetNode":"lab2_node_5_1","distance":0.6},{"sourceNode":"lab2_node_8_0","targetNode":"lab2_node_9_0","distance":0.6},{"sourceNode":"lab2_node_8_0","targetNode":"lab2_node_8_1","distance":0.6},{"sourceNode":"lab2_node_9_0","targetNode":"lab2_node_10_0","distance":0.6},{"sourceNode":"lab2_node_9_0","targetNode":"lab2_node_9_1","distance":0.6},{"sourceNode":"lab2_node_10_0","targetNode":"lab2_node_11_0","distance":0.6},{"sourceNode":"lab2_node_10_0","targetNode":"lab2_node_10_1","distance":0.6},{"sourceNode":"lab2_node_11_0","targetNode":"lab2_node_11_1","distance":0.6},{"sourceNode":"lab2_node_0_1","targetNode":"lab2_node_1_1","distance":0.6},{"sourceNode":"lab2_node_0_1","targetNode":"lab2_node_0_2","distance":0.6},{"sourceNode":"lab2_node_1_1","targetNode":"lab2_node_2_1","distance":0.6},{"sourceNode":"lab2_node_1_1","targetNode":"lab2_node_1_2","distance":0.6},{"sourceNode":"lab2_node_2_1","targetNode":"lab2_node_3_1","distance":0.6},{"sourceNode":"lab2_node_2_1","targetNode":"lab2_node_2_2","distance":0.6},{"sourceNode":"lab2_node_3_1","targetNode":"lab2_node_4_1","distance":0.6},{"sourceNode":"lab2_node_3_1","targetNode":"lab2_node_3_2","distance":0.6},{"sourceNode":"lab2_node_4_1","targetNode":"lab2_node_5_1","distance":0.6},{"sourceNode":"lab2_node_4_1","targetNode":"lab2_node_4_2","distance":0.6},{"sourceNode":"lab2_node_5_1","targetNode":"lab2_node_5_2","distance":0.6},{"sourceNode":"lab2_node_8_1","targetNode":"lab2_node_9_1","distance":0.6},{"sourceNode":"lab2_node_8_1","targetNode":"lab2_node_8_2","distance":0.6},{"sourceNode":"lab2_node_9_1","targetNode":"lab2_node_10_1","distance":0.6},{"sourceNode":"lab2_node_9_1","targetNode":"lab2_node_9_2","distance":0.6},{"sourceNode":"lab2_node_10_1","targetNode":"lab2_node_11_1","distance":0.6},{"sourceNode":"lab2_node_10_1","targetNode":"lab2_node_10_2","distance":0.6},{"sourceNode":"lab2_node_11_1","targetNode":"lab2_node_11_2","distance":0.6},{"sourceNode":"lab2_node_0_2","targetNode":"lab2_node_1_2","distance":0.6},{"sourceNode":"lab2_node_0_2","targetNode":"lab2_node_0_3","distance":0.6},{"sourceNode":"lab2_node_1_2","targetNode":"lab2_node_2_2","distance":0.6},{"sourceNode":"lab2_node_1_2","targetNode":"lab2_node_1_3","distance":0.6},{"sourceNode":"lab2_node_2_2","targetNode":"lab2_node_3_2","distance":0.6},{"sourceNode":"lab2_node_2_2","targetNode":"lab2_node_2_3","distance":0.6},{"sourceNode":"lab2_node_3_2","targetNode":"lab2_node_4_2","distance":0.6},{"sourceNode":"lab2_node_3_2","targetNode":"lab2_node_3_3","distance":0.6},{"sourceNode":"lab2_node_4_2","targetNode":"lab2_node_5_2","distance":0.6},{"sourceNode":"lab2_node_5_2","targetNode":"lab2_node_6_2","distance":0.6},{"sourceNode":"lab2_node_5_2","targetNode":"lab2_node_5_3","distance":0.6},{"sourceNode":"lab2_node_6_2","targetNode":"lab2_node_7_2","distance":0.6},{"sourceNode":"lab2_node_7_2","targetNode":"lab2_node_8_2","distance":0.6},{"sourceNode":"lab2_node_8_2","targetNode":"lab2_node_9_2","distance":0.6},{"sourceNode":"lab2_node_8_2","targetNode":"lab2_node_8_3","distance":0.6},{"sourceNode":"lab2_node_9_2","targetNode":"lab2_node_10_2","distance":0.6},{"sourceNode":"lab2_node_9_2","targetNode":"lab2_node_9_3","distance":0.6},{"sourceNode":"lab2_node_10_2","targetNode":"lab2_node_11_2","distance":0.6},{"sourceNode":"lab2_node_10_2","targetNode":"lab2_node_10_3","distance":0.6},{"sourceNode":"lab2_node_0_3","targetNode":"lab2_node_1_3","distance":0.6},{"sourceNode":"lab2_node_1_3","targetNode":"lab2_node_2_3","distance":0.6},{"sourceNode":"lab2_node_1_3","targetNode":"lab2_node_1_4","distance":0.6},{"sourceNode":"lab2_node_2_3","targetNode":"lab2_node_3_3","distance":0.6},{"sourceNode":"lab2_node_2_3","targetNode":"lab2_node_2_4","distance":0.6},{"sourceNode":"lab2_node_3_3","targetNode":"lab2_node_3_4","distance":0.6},{"sourceNode":"lab2_node_5_3","targetNode":"lab2_node_5_4","distance":0.6},{"sourceNode":"lab2_node_8_3","targetNode":"lab2_node_9_3","distance":0.6},{"sourceNode":"lab2_node_8_3","targetNode":"lab2_node_8_4","distance":0.6},{"sourceNode":"lab2_node_9_3","targetNode":"lab2_node_10_3","distance":0.6},{"sourceNode":"lab2_node_9_3","targetNode":"lab2_node_9_4","distance":0.6},{"sourceNode":"lab2_node_10_3","targetNode":"lab2_node_10_4","distance":0.6},{"sourceNode":"lab2_node_1_4","targetNode":"lab2_node_2_4","distance":0.6},{"sourceNode":"lab2_node_1_4","targetNode":"lab2_node_1_5","distance":0.6},{"sourceNode":"lab2_node_2_4","targetNode":"lab2_node_3_4","distance":0.6},{"sourceNode":"lab2_node_2_4","targetNode":"lab2_node_2_5","distance":0.6},{"sourceNode":"lab2_node_3_4","targetNode":"lab2_node_3_5","distance":0.6},{"sourceNode":"lab2_node_5_4","targetNode":"lab2_node_5_5","distance":0.6},{"sourceNode":"lab2_node_8_4","targetNode":"lab2_node_9_4","distance":0.6},{"sourceNode":"lab2_node_8_4","targetNode":"lab2_node_8_5","distance":0.6},{"sourceNode":"lab2_node_9_4","targetNode":"lab2_node_10_4","distance":0.6},{"sourceNode":"lab2_node_9_4","targetNode":"lab2_node_9_5","distance":0.6},{"sourceNode":"lab2_node_10_4","targetNode":"lab2_node_10_5","distance":0.6},{"sourceNode":"lab2_node_1_5","targetNode":"lab2_node_2_5","distance":0.6},{"sourceNode":"lab2_node_1_5","targetNode":"lab2_node_1_6","distance":0.6},{"sourceNode":"lab2_node_2_5","targetNode":"lab2_node_3_5","distance":0.6},{"sourceNode":"lab2_node_2_5","targetNode":"lab2_node_2_6","distance":0.6},{"sourceNode":"lab2_node_3_5","targetNode":"lab2_node_3_6","distance":0.6},{"sourceNode":"lab2_node_5_5","targetNode":"lab2_node_5_6","distance":0.6},{"sourceNode":"lab2_node_8_5","targetNode":"lab2_node_9_5","distance":0.6},{"sourceNode":"lab2_node_8_5","targetNode":"lab2_node_8_6","distance":0.6},{"sourceNode":"lab2_node_9_5","targetNode":"lab2_node_10_5","distance":0.6},{"sourceNode":"lab2_node_9_5","targetNode":"lab2_node_9_6","distance":0.6},{"sourceNode":"lab2_node_10_5","targetNode":"lab2_node_10_6","distance":0.6},{"sourceNode":"lab2_node_1_6","targetNode":"lab2_node_2_6","distance":0.6},{"sourceNode":"lab2_node_1_6","targetNode":"lab2_node_1_7","distance":0.6},{"sourceNode":"lab2_node_2_6","targetNode":"lab2_node_3_6","distance":0.6},{"sourceNode":"lab2_node_2_6","targetNode":"lab2_node_2_7","distance":0.6},{"sourceNode":"lab2_node_3_6","targetNode":"lab2_node_3_7","distance":0.6},{"sourceNode":"lab2_node_5_6","targetNode":"lab2_node_5_7","distance":0.6},{"sourceNode":"lab2_node_8_6","targetNode":"lab2_node_9_6","distance":0.6},{"sourceNode":"lab2_node_8_6","targetNode":"lab2_node_8_7","distance":0.6},{"sourceNode":"lab2_node_9_6","targetNode":"lab2_node_10_6","distance":0.6},{"sourceNode":"lab2_node_9_6","targetNode":"lab2_node_9_7","distance":0.6},{"sourceNode":"lab2_node_10_6","targetNode":"lab2_node_10_7","distance":0.6},{"sourceNode":"lab2_node_1_7","targetNode":"lab2_node_2_7","distance":0.6},{"sourceNode":"lab2_node_1_7","targetNode":"lab2_node_1_8","distance":0.6},{"sourceNode":"lab2_node_2_7","targetNode":"lab2_node_3_7","distance":0.6},{"sourceNode":"lab2_node_2_7","targetNode":"lab2_node_2_8","distance":0.6},{"sourceNode":"lab2_node_3_7","targetNode":"lab2_node_3_8","distance":0.6},{"sourceNode":"lab2_node_5_7","targetNode":"lab2_node_5_8","distance":0.6},{"sourceNode":"lab2_node_8_7","targetNode":"lab2_node_9_7","distance":0.6},{"sourceNode":"lab2_node_8_7","targetNode":"lab2_node_8_8","distance":0.6},{"sourceNode":"lab2_node_9_7","targetNode":"lab2_node_10_7","distance":0.6},{"sourceNode":"lab2_node_9_7","targetNode":"lab2_node_9_8","distance":0.6},{"sourceNode":"lab2_node_10_7","targetNode":"lab2_node_10_8","distance":0.6},{"sourceNode":"lab2_node_1_8","targetNode":"lab2_node_2_8","distance":0.6},{"sourceNode":"lab2_node_1_8","targetNode":"lab2_node_1_9","distance":0.6},{"sourceNode":"lab2_node_2_8","targetNode":"lab2_node_3_8","distance":0.6},{"sourceNode":"lab2_node_2_8","targetNode":"lab2_node_2_9","distance":0.6},{"sourceNode":"lab2_node_3_8","targetNode":"lab2_node_3_9","distance":0.6},{"sourceNode":"lab2_node_5_8","targetNode":"lab2_node_5_9","distance":0.6},{"sourceNode":"lab2_node_8_8","targetNode":"lab2_node_9_8","distance":0.6},{"sourceNode":"lab2_node_8_8","targetNode":"lab2_node_8_9","distance":0.6},{"sourceNode":"lab2_node_9_8","targetNode":"lab2_node_10_8","distance":0.6},{"sourceNode":"lab2_node_9_8","targetNode":"lab2_node_9_9","distance":0.6},{"sourceNode":"lab2_node_10_8","targetNode":"lab2_node_10_9","distance":0.6},{"sourceNode":"lab2_node_1_9","targetNode":"lab2_node_2_9","distance":0.6},{"sourceNode":"lab2_node_2_9","targetNode":"lab2_node_3_9","distance":0.6},{"sourceNode":"lab2_node_3_9","targetNode":"lab2_node_3_10","distance":0.6},{"sourceNode":"lab2_node_5_9","targetNode":"lab2_node_5_10","distance":0.6},{"sourceNode":"lab2_node_8_9","targetNode":"lab2_node_9_9","distance":0.6},{"sourceNode":"lab2_node_8_9","targetNode":"lab2_node_8_10","distance":0.6},{"sourceNode":"lab2_node_9_9","targetNode":"lab2_node_10_9","distance":0.6},{"sourceNode":"lab2_node_9_9","targetNode":"lab2_node_9_10","distance":0.6},{"sourceNode":"lab2_node_10_9","targetNode":"lab2_node_10_10","distance":0.6},{"sourceNode":"lab2_node_3_10","targetNode":"lab2_node_4_10","distance":0.6},{"sourceNode":"lab2_node_3_10","targetNode":"lab2_node_3_11","distance":0.6},{"sourceNode":"lab2_node_4_10","targetNode":"lab2_node_5_10","distance":0.6},{"sourceNode":"lab2_node_4_10","targetNode":"lab2_node_4_11","distance":0.6},{"sourceNode":"lab2_node_5_10","targetNode":"lab2_node_6_10","distance":0.6},{"sourceNode":"lab2_node_5_10","targetNode":"lab2_node_5_11","distance":0.6},{"sourceNode":"lab2_node_6_10","targetNode":"lab2_node_7_10","distance":0.6},{"sourceNode":"lab2_node_6_10","targetNode":"lab2_node_6_11","distance":0.6},{"sourceNode":"lab2_node_7_10","targetNode":"lab2_node_8_10","distance":0.6},{"sourceNode":"lab2_node_7_10","targetNode":"lab2_node_7_11","distance":0.6},{"sourceNode":"lab2_node_8_10","targetNode":"lab2_node_9_10","distance":0.6},{"sourceNode":"lab2_node_8_10","targetNode":"lab2_node_8_11","distance":0.6},{"sourceNode":"lab2_node_9_10","targetNode":"lab2_node_10_10","distance":0.6},{"sourceNode":"lab2_node_9_10","targetNode":"lab2_node_9_11","distance":0.6},{"sourceNode":"lab2_node_10_10","targetNode":"lab2_node_10_11","distance":0.6},{"sourceNode":"lab2_node_3_11","targetNode":"lab2_node_4_11","distance":0.6},{"sourceNode":"lab2_node_4_11","targetNode":"lab2_node_5_11","distance":0.6},{"sourceNode":"lab2_node_5_11","targetNode":"lab2_node_6_11","distance":0.6},{"sourceNode":"lab2_node_6_11","targetNode":"lab2_node_7_11","distance":0.6},{"sourceNode":"lab2_node_7_11","targetNode":"lab2_node_8_11","distance":0.6},{"sourceNode":"lab2_node_8_11","targetNode":"lab2_node_9_11","distance":0.6},{"sourceNode":"lab2_node_9_11","targetNode":"lab2_node_10_11","distance":0.6}]}};
+const TILE=62, N=12, LEFT=112, TOP1=76, GAP=112;
+const labs=["lab1","lab2"];
+// Explicit cross-lab walkable bridge edges supplied by the user.
+// No bridge/intermediate coordinate nodes are created.
+const BRIDGE_EDGES=[
+  {sourceNode:'lab2_node_4_11',targetNode:'lab1_node_2_0',distance:0.6},
+  {sourceNode:'lab2_node_4_11',targetNode:'lab1_node_3_0',distance:0.6},
+  {sourceNode:'lab2_node_5_11',targetNode:'lab1_node_3_0',distance:0.6},
+  {sourceNode:'lab2_node_5_11',targetNode:'lab1_node_2_0',distance:0.6}
+];
+let scale=.8, tx=0, ty=0, dragging=false, sx=0, sy=0, ox=0, oy=0;
+let selected=[];
+
+const allNodes={}, allEdges={}, adj=new Map();
+for(const lab of labs){
+  allNodes[lab]=new Map(DATA[lab].nodes.map(n=>[n.nodeId,n]));
+  allEdges[lab]=DATA[lab].edges;
+  if(lab==="lab1"){
+    allEdges[lab]=allEdges[lab].concat([
+      {sourceNode:"lab1_node_7_6",targetNode:"lab1_node_7_5",distance:0.6},
+      {sourceNode:"lab1_node_7_6",targetNode:"lab1_node_7_7",distance:0.6},
+      {sourceNode:"lab1_node_7_6",targetNode:"lab1_node_6_6",distance:0.6},
+      {sourceNode:"lab1_node_7_9",targetNode:"lab1_node_7_8",distance:0.6},
+      {sourceNode:"lab1_node_7_9",targetNode:"lab1_node_7_10",distance:0.6},
+      {sourceNode:"lab1_node_7_9",targetNode:"lab1_node_6_9",distance:0.6},
+      {sourceNode:"lab1_node_7_9",targetNode:"lab1_node_8_9",distance:0.6}
+    ]);
+  }
+  for(const n of DATA[lab].nodes) adj.set(n.nodeId,[]);
+  for(const e of DATA[lab].edges){
+    adj.get(e.sourceNode).push({to:e.targetNode,w:e.distance});
+    adj.get(e.targetNode).push({to:e.sourceNode,w:e.distance});
+  }
+}
+for(const e of BRIDGE_EDGES){
+  if(!adj.has(e.sourceNode)) adj.set(e.sourceNode,[]);
+  if(!adj.has(e.targetNode)) adj.set(e.targetNode,[]);
+  adj.get(e.sourceNode).push({to:e.targetNode,w:e.distance,bridge:true});
+  adj.get(e.targetNode).push({to:e.sourceNode,w:e.distance,bridge:true});
+}
+
+function ypx(y,top){return top+(N-1-y)*TILE+TILE/2}
+function xpx(x){return LEFT+x*TILE+TILE/2}
+
+function labSvg(lab,top){
+  const nodes=allNodes[lab], edges=allEdges[lab], name=lab==="lab1"?"LAB 1":"LAB 2";
+  const bottom=top+N*TILE, right=LEFT+N*TILE;
+  let s=`<rect class="lab-card" x="${LEFT-22}" y="${top-22}" width="${N*TILE+44}" height="${N*TILE+44}" rx="18"/>`;
+  s+=`<text class="lab-title" x="${LEFT}" y="${top-39}">${name}</text>`;
+  s+=`<text class="lab-meta" x="${LEFT+85}" y="${top-39}">${nodes.size} coordinate nodes · ${edges.length} walkable edges</text>`;
+  for(let x=0;x<N;x++) s+=`<text class="axis" text-anchor="middle" x="${xpx(x)}" y="${top-10}">${x}</text>`;
+  for(let y=0;y<N;y++) s+=`<text class="axis" text-anchor="end" x="${LEFT-28}" y="${ypx(y,top)+4}">${y}</text>`;
+  for(let y=0;y<N;y++) for(let x=0;x<N;x++){
+    const id=`${lab}_node_${x}_${y}`, exists=nodes.has(id);
+    const py=top+(N-1-y)*TILE;
+    s+=`<rect class="cell ${exists?'hasnode':''}" x="${LEFT+x*TILE}" y="${py}" width="${TILE}" height="${TILE}"/>`;
+    s+=`<text class="grid-label" x="${LEFT+x*TILE+5}" y="${py+13}">(${x},${y})</text>`;
+  }
+  for(const e of edges){
+    const a=nodes.get(e.sourceNode), b=nodes.get(e.targetNode);
+    if(!a||!b) continue;
+    const x1=xpx(a.x), y1=ypx(a.y,top), x2=xpx(b.x), y2=ypx(b.y,top);
+    const sel=selected.includes(e.sourceNode)&&selected.includes(e.targetNode);
+    s+=`<line class="path-outline" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+    s+=`<line class="path ${sel?'selected':''}" data-edge="${e.sourceNode}|${e.targetNode}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+  }
+  for(const n of DATA[lab].nodes){
+    const sel=selected.includes(n.nodeId);
+    s+=`<circle class="node-dot ${sel?'selected':''}" data-node="${n.nodeId}" cx="${xpx(n.x)}" cy="${ypx(n.y,top)}" r="7" onclick="selectNode(event,'${n.nodeId}')"/>`;
+    s+=`<text class="node-label ${sel?'selected':''}" text-anchor="middle" x="${xpx(n.x)}" y="${ypx(n.y,top)+23}">${n.x},${n.y}</text>`;
+  }
+  s+=`<text class="lab-meta" x="${LEFT}" y="${bottom+20}">Coordinates: x = 0 → 11 · y = 0 at bottom → 11 at top</text>`;
+  return s;
+}
+
+function draw(){
+  const H1=N*TILE, TOP2=TOP1+H1+GAP, H=TOP2+N*TILE+95, W=LEFT*2+N*TILE;
+  let s=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" rx="24" fill="#f8fafc"/>`;
+  s+=labSvg("lab1",TOP1);
+  const bridgeTop=TOP1+N*TILE, bridgeBottom=TOP2;
+  for(const e of BRIDGE_EDGES){
+    const a=allNodes[e.sourceNode.startsWith("lab1_")?"lab1":"lab2"].get(e.sourceNode);
+    const b=allNodes[e.targetNode.startsWith("lab1_")?"lab1":"lab2"].get(e.targetNode);
+    if(!a||!b) continue;
+    const atop=e.sourceNode.startsWith("lab1_")?TOP1:TOP2;
+    const btop=e.targetNode.startsWith("lab1_")?TOP1:TOP2;
+    const x1=xpx(a.x),y1=ypx(a.y,atop),x2=xpx(b.x),y2=ypx(b.y,btop);
+    const sel=selected.includes(e.sourceNode)&&selected.includes(e.targetNode);
+    s+=`<line class="bridge-outline" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+    s+=`<line class="bridge ${sel?'selected':''}" data-bridge="${e.sourceNode}|${e.targetNode}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+  }
+  s+=`<line class="divider" x1="${LEFT}" y1="${TOP1+N*TILE+GAP/2}" x2="${LEFT+N*TILE}" y2="${TOP1+N*TILE+GAP/2}"/>`;
+  s+=`<text class="lab-meta bridge-label" text-anchor="middle" x="${LEFT+N*TILE/2}" y="${TOP1+N*TILE+GAP/2-10}">WALKABLE BRIDGE · 4 SUPPLIED CROSS-LAB EDGES</text>`;
+  s+=labSvg("lab2",TOP2);
+  s+=`<g transform="translate(${W-58},42)"><text class="north" text-anchor="middle">N</text><path d="M0 8l-7 17 7-3 7 3z" fill="#4b5563"/></g>`;
+  const bx=W-215, by=H-28;
+  s+=`<line x1="${bx}" y1="${by}" x2="${bx+155}" y2="${by}" stroke="#4b5563" stroke-width="4"/><line x1="${bx}" y1="${by-6}" x2="${bx}" y2="${by+6}" stroke="#4b5563" stroke-width="2"/><line x1="${bx+155}" y1="${by-6}" x2="${bx+155}" y2="${by+6}" stroke="#4b5563" stroke-width="2"/><text class="scale" x="${bx}" y="${by-10}">1.5 m (2.5 tiles)</text>`;
+  s+=`</svg>`;
+  document.getElementById("map").innerHTML=s;
+  updateInfo();
+}
+
+function selectNode(ev,id){
+  ev.stopPropagation();
+  if(selected.includes(id)){ selected=selected.filter(x=>x!==id); draw(); return; }
+  if(selected.length>=2) selected=[id];
+  else selected.push(id);
+  if(selected.length===2) showShortestPath(selected[0],selected[1]);
+  else updateInfo();
+  draw();
+}
+
+function nodeLab(id){ return id.startsWith("lab1_")?"lab1":"lab2"; }
+
+function showShortestPath(a,b){
+  const dist=new Map(), prev=new Map(), used=new Set();
+  for(const id of adj.keys()) dist.set(id,Infinity);
+  dist.set(a,0);
+  while(used.size<adj.size){
+    let u=null,best=Infinity;
+    for(const [id,d] of dist) if(!used.has(id)&&d<best){best=d;u=id}
+    if(u===null) break;
+    used.add(u);
+    if(u===b) break;
+    for(const e of adj.get(u)||[]){
+      const nd=best+e.w;
+      if(nd<dist.get(e.to)){dist.set(e.to,nd);prev.set(e.to,u);}
+    }
+  }
+  const route=[];
+  let cur=b;
+  if(!prev.has(cur)&&cur!==a){ updateInfo("No route found between these nodes.","The selected coordinates are not connected by the supplied walkable edges."); return; }
+  while(cur!==undefined){route.unshift(cur); if(cur===a)break; cur=prev.get(cur);}
+  selected=route;
+  const meters=dist.get(b);
+  const rb=document.getElementById("routebar");
+  rb.style.display="block";
+  rb.textContent=`Route · ${route.length} nodes · ${meters.toFixed(1)} m${nodeLab(a)!==nodeLab(b)?" · crosses the walkable bridge":""}`;
+  const fmt=id=>{const m=id.match(/node_(\d+)_(\d+)$/); return m?`(${m[1]},${m[2]})`:id};
+  updateInfo(`Route selected`, `${fmt(route[0])} → ${fmt(route[route.length-1])} · ${meters.toFixed(1)} m${nodeLab(a)!==nodeLab(b)?" · cross-lab bridge included":""}`);
+}
+
+function updateInfo(title="Map ready",extra="Select two coordinate nodes to calculate the shortest path."){
+  document.getElementById("info").innerHTML=`<strong>${title}</strong><br>${extra}<br><span style="color:#7a8490">Lab 1: ${DATA.lab1.nodes.length} nodes / ${DATA.lab1.edges.length} edges<br>Lab 2: ${DATA.lab2.nodes.length} nodes / ${DATA.lab2.edges.length} edges</span>`;
+}
+
+function resetView(){
+  const v=document.getElementById("viewport");
+  const H1=N*TILE, TOP2=TOP1+H1+GAP, H=TOP2+N*TILE+95, W=LEFT*2+N*TILE;
+  scale=Math.min(.88,Math.max(.45,Math.min((v.clientWidth-70)/W,(v.clientHeight-70)/H)));
+  tx=(v.clientWidth-W*scale)/2; ty=(v.clientHeight-H*scale)/2; updateTransform();
+}
+function updateTransform(){document.getElementById("map").style.transform=`translate(${tx}px,${ty}px) scale(${scale})`}
+function zoomAt(f){
+  const v=document.getElementById("viewport"),cx=v.clientWidth/2,cy=v.clientHeight/2,old=scale;
+  scale=Math.max(.35,Math.min(2.5,scale*f)); tx=cx-(cx-tx)*(scale/old); ty=cy-(cy-ty)*(scale/old); updateTransform();
+}
+const v=document.getElementById("viewport");
+v.addEventListener("pointerdown",e=>{if(e.target.closest(".controls")||e.target.closest("[data-node]"))return;dragging=true;v.classList.add("dragging");sx=e.clientX;sy=e.clientY;ox=tx;oy=ty;v.setPointerCapture(e.pointerId)});
+v.addEventListener("pointermove",e=>{if(dragging){tx=ox+e.clientX-sx;ty=oy+e.clientY-sy;updateTransform()}});
+v.addEventListener("pointerup",()=>{dragging=false;v.classList.remove("dragging")});
+v.addEventListener("wheel",e=>{e.preventDefault();zoomAt(e.deltaY<0?1.1:.90909)},{passive:false});
+v.addEventListener("dblclick",()=>{selected=[];document.getElementById("routebar").style.display="none";draw()});
+window.addEventListener("resize",resetView);
+draw(); setTimeout(resetView,50);
+</script>
+</body>
+</html>

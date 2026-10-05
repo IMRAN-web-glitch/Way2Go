@@ -1,0 +1,630 @@
+/* Google Maps Style Navigation Styling */
+
+.gmaps-layout-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #f1f5f9;
+  overflow: hidden;
+  position: relative;
+}
+
+.gmaps-status-live {
+  color: #4ade80 !important;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Main Container */
+.google-maps-container {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  background-color: var(--gm-bg-base, #eef2f6);
+}
+
+/* Light Theme Variables */
+.google-maps-container.map-mode {
+  --gm-bg-base: #eef2f6;
+  --gm-road: #cbd5e1;
+  --gm-road-inner: #ffffff;
+  --gm-building-bg: #ffffff;
+  --gm-building-stroke: #94a3b8;
+  --gm-corridor: #f8fafc;
+  --gm-corridor-stroke: #e2e8f0;
+  --gm-tactile: #fed7aa;
+  --gm-grass: #dcfce7;
+  --gm-grass-border: #bbf7d0;
+  --gm-room-academic: #f0fdf4;
+  --gm-room-office: #eff6ff;
+  --gm-room-service: #fce7f3;
+  --gm-text: #1e293b;
+  --gm-nav-header-bg: #15803d; /* Google Maps Deep Green */
+}
+
+/* Dark / Satellite Theme Variables */
+.google-maps-container.satellite-mode {
+  --gm-bg-base: #0b1120;
+  --gm-road: #1e293b;
+  --gm-road-inner: #334155;
+  --gm-building-bg: #1e293b;
+  --gm-building-stroke: #475569;
+  --gm-corridor: #0f172a;
+  --gm-corridor-stroke: #334155;
+  --gm-tactile: #f59e0b;
+  --gm-grass: #064e3b;
+  --gm-grass-border: #047857;
+  --gm-room-academic: #1e293b;
+  --gm-room-office: #0f172a;
+  --gm-room-service: #1e293b;
+  --gm-text: #f8fafc;
+  --gm-nav-header-bg: #1e293b; /* Dark Slate Header */
+}
+
+.google-maps-container.blueprint-mode {
+  --gm-nav-header-bg: #1e293b;
+}
+
+/* 1. Google Maps Navigation Header (Maneuver Bar) */
+.gmaps-nav-header {
+  background-color: var(--gm-nav-header-bg, #15803d);
+  color: #ffffff;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  z-index: 20;
+  transition: background-color 0.3s ease;
+}
+
+.gmaps-maneuver-box {
+  width: 48px;
+  height: 48px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.gmaps-maneuver-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.gmaps-distance-countdown {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+  line-height: 1.1;
+}
+
+.gmaps-maneuver-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gmaps-maneuver-subtext {
+  font-size: 0.78rem;
+  color: #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gmaps-voice-pill {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.15);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.gmaps-voice-pill:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* 2. Interactive Map Viewport */
+.gmaps-viewport {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--gm-bg-base, #eef2f6);
+}
+
+.gmaps-canvas-stage {
+  will-change: transform;
+}
+
+.gmaps-svg-surface {
+  display: block;
+  user-select: none;
+}
+
+/* Blueprint raw SVG wrapper */
+.gmaps-blueprint-wrapper {
+  will-change: transform;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gmaps-blueprint-raw-svg {
+  max-width: 850px;
+  max-height: 600px;
+  display: block;
+}
+
+/* Route animations */
+.gmaps-animated-chevrons {
+  animation: gmapsChevronMove 1.5s linear infinite;
+}
+
+@keyframes gmapsChevronMove {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+/* GPS Radar pulse */
+.gmaps-radar-pulse {
+  transform-origin: center;
+  animation: gmapsPulse 2s ease-out infinite;
+}
+
+@keyframes gmapsPulse {
+  0% {
+    r: 12px;
+    opacity: 0.9;
+  }
+  100% {
+    r: 44px;
+    opacity: 0;
+  }
+}
+
+/* 3. Floating Google Maps Controls */
+/* Layer Selector */
+.gmaps-floating-layers {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  display: flex;
+  background-color: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border-radius: 20px;
+  padding: 3px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.gmaps-layer-btn {
+  border: none;
+  background: transparent;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #475569;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gmaps-layer-btn.active {
+  background-color: #1e293b;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Floor Picker */
+.gmaps-floor-picker {
+  position: absolute;
+  top: 60px;
+  left: 14px;
+  display: flex;
+  flex-direction: column;
+  background-color: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border-radius: 20px;
+  padding: 3px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  gap: 2px;
+}
+
+.gmaps-floor-btn {
+  border: none;
+  background: transparent;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #475569;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.gmaps-floor-btn.active {
+  background-color: #1e293b;
+  color: #ffffff;
+}
+
+/* Right Stack Actions */
+.gmaps-floating-actions {
+  position: absolute;
+  right: 14px;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 10;
+}
+
+.gmaps-round-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gmaps-round-btn:hover {
+  transform: scale(1.05);
+  background-color: #ffffff;
+}
+
+.gmaps-compass-needle {
+  font-size: 1.1rem;
+  color: #dc2626;
+  font-weight: 900;
+  line-height: 1;
+  transition: transform 0.3s ease;
+}
+
+.gmaps-zoom-pill {
+  display: flex;
+  flex-direction: column;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border-radius: 22px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.14);
+  overflow: hidden;
+}
+
+.gmaps-zoom-btn {
+  width: 44px;
+  height: 38px;
+  border: none;
+  background: transparent;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.gmaps-zoom-btn:hover {
+  background-color: #f1f5f9;
+}
+
+.gmaps-zoom-divider {
+  height: 1px;
+  background-color: #e2e8f0;
+}
+
+/* Location Chip */
+.gmaps-location-chip {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(30, 41, 59, 0.85);
+  backdrop-filter: blur(6px);
+  color: #ffffff;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
+.gmaps-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #4ade80;
+  box-shadow: 0 0 8px #4ade80;
+  animation: liveDotPulse 1.5s infinite;
+}
+
+@keyframes liveDotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* 4. Bottom Google Maps Navigation Dashboard */
+.gmaps-bottom-sheet {
+  background-color: #ffffff;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  padding: 16px 20px 20px;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 20;
+  border: 1px solid #e2e8f0;
+  border-bottom: none;
+}
+
+.gmaps-eta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gmaps-eta-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.gmaps-eta-time {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #16a34a; /* Classic Google Maps ETA Green */
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.gmaps-eta-dist {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 600;
+  margin-top: 3px;
+}
+
+.gmaps-steps-drawer-toggle {
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gmaps-steps-drawer-toggle:hover {
+  background-color: #e2e8f0;
+}
+
+/* Step list drawer */
+.gmaps-step-list-drawer {
+  max-height: 180px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background-color: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.gmaps-step-drawer-title {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin: 0 4px 4px 4px;
+}
+
+.gmaps-step-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.gmaps-step-row:hover {
+  background-color: #f1f5f9;
+}
+
+.gmaps-step-row.active-step {
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.gmaps-step-row.done-step {
+  opacity: 0.6;
+}
+
+.gmaps-step-row-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #334155;
+  flex-shrink: 0;
+}
+
+.active-step .gmaps-step-row-num {
+  background-color: #3b82f6;
+  color: #ffffff;
+}
+
+.gmaps-step-row-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.gmaps-step-row-inst {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gmaps-step-row-sub {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* Navigation Action Buttons */
+.gmaps-nav-buttons-row {
+  display: flex;
+  gap: 10px;
+}
+
+.gmaps-btn-nav {
+  flex: 1;
+  padding: 13px 18px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gmaps-btn-nav.secondary {
+  background-color: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.gmaps-btn-nav.secondary:hover:not(:disabled) {
+  background-color: #e2e8f0;
+}
+
+.gmaps-btn-nav.secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.gmaps-btn-nav.primary {
+  background-color: #1d4ed8;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.3);
+}
+
+.gmaps-btn-nav.primary:hover {
+  background-color: #1e40af;
+  box-shadow: 0 6px 16px rgba(29, 78, 216, 0.4);
+}
+
+/* Footer row */
+.gmaps-footer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 4px;
+}
+
+.gmaps-pedometer-tag {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.gmaps-exit-btn {
+  background: transparent;
+  border: none;
+  color: #dc2626;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+
+.gmaps-exit-btn:hover {
+  background-color: #fee2e2;
+}
+
+/* High Contrast Mode overrides */
+body.theme-high-contrast .google-maps-container {
+  --gm-bg-base: #000000;
+  --gm-road: #ffffff;
+  --gm-road-inner: #000000;
+  --gm-building-bg: #121212;
+  --gm-building-stroke: #ffffff;
+  --gm-corridor: #000000;
+  --gm-corridor-stroke: #ffffff;
+  --gm-text: #ffffff;
+  --gm-nav-header-bg: #000000;
+}
+
+body.theme-high-contrast .gmaps-bottom-sheet {
+  background-color: #000000;
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
+body.theme-high-contrast .gmaps-floating-layers,
+body.theme-high-contrast .gmaps-floor-picker,
+body.theme-high-contrast .gmaps-round-btn,
+body.theme-high-contrast .gmaps-zoom-pill {
+  background-color: #121212;
+  border-color: #ffffff;
+  color: #ffffff;
+}
